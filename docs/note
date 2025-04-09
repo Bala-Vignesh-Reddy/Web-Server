@@ -1,0 +1,26 @@
+Multithreaded proxy web server in C
+
+￼![flowchart](<Multithreaded web server.png>)
+
+This is multithreaded web server with LRU cache and proxy.. 
+Multithreaded web server  that handles multiple client requests simultaneously using threads.. it does parallel processing without blocking other requests.
+
+Proxy server is intermediate between the clients and the servers.. 
+
+LRU cache (Least Recently Used)
+There are two ways we can implement the LRU.. that is the time based and counter based.. it mean that consider the LRU can save upto 3 things in cache.. and we want the 4th one to be added.. then we will check which is the least visited site in the cache and remove that and replace it with the 4th one.. 
+The least used will be removed in short.. 
+
+![client](clients.png)
+
+For the communication between the server and the client we will setup the socket connection.. for every request from the user.. we will create a different socket which will be connected with the proxy server.. 
+￼
+For these we will create threads.. and each thread will have a socket connection.. for thread we will use `pthreads` tid for storing the id of the threads/sockets
+
+We will also use the mutex_t lock.. here lock means.. consider if we have two requests from clients so we have two requests t1 and t2 that is threads.. but there are sharing the same resource for cache storing.. so here it could have a race condition like both will access the resource at same time causing problems.. so, to solve this we use lock.. it means consider t1 likes to store the cache data in the storage.. it will check the lock condition if it is open it will lock if for itself and it will upload the data whatever it wants.. at the same time if t2 tries to access the resource, it will not be able to do it because t1 has locked it. So, t2 will wait for t1 to complete then it will access after t1 completes.. that is the reason the mutex lock is very important.
+Mutex lock has two value.. 1 or 0.. 0 means it is not acquired/open.. and 1 means it is locked.. 
+
+Semaphore.. it is also a one kind of lock but it is stored in variable.. like if max clients allowed are 10 then semaphore=10.. semaphore has two main functions.. sem_wait() sem_signal() if first client has send request to the server.. the sem_wait() will check the variable if it is positive then it will allow the thread to create a connection and sharing is possible.. at the same time it will reduce the semaphore by 1 that is it will be 9.. similarly 10 concurrent threads can be created and 10 clients can use it parallelly.. but if 11 client is trying to access.. then the semaphore will become -1, so sem_wait() will tell the client to wait.. and similarly if someone exists or request is completed.. then sem_signal() tell the semaphore the client has left and the variable is added with 1.. to when any one among the 10 will leave.. the 11 client will be awaken and given access to the server..
+
+In c we have externally typecast everything.. 
+
